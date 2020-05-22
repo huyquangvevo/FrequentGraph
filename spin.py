@@ -1,5 +1,5 @@
 from utils import readGraphs
-from algorithms import getFrequentEdges
+from algorithms import getFrequentEdges,frequentGraph
 
 
 graphs = readGraphs('mico.outx')
@@ -7,4 +7,4 @@ graphs = readGraphs('mico.outx')
 
 if __name__ == "__main__":
     frequents = getFrequentEdges(graphs,0.8)
-    print(frequents)
+    frequentGraph(graphs,frequents)
