@@ -1,6 +1,9 @@
 import numpy as np
 import os
 from graph import Graph
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 def read_graph_corpus(path, label_center_path=None):
     graphs = []
@@ -43,3 +46,27 @@ def readGraphs(path):
             g[e[1],e[0]] = l
         graphs.append(g)
     return graphs
+
+def plotGraph(graph : np.ndarray,isShowedID=True):
+    edges = []
+    edgeLabels = {}
+    for i in range(graph.shape[0]):
+        indices = np.where(graph[i][i+1:] > 0)[0]
+        for id in indices:
+            edges.append([i,i+id+1])
+            edgeLabels[(i,i+id+1)] = graph[i,i+id+1]
+    print(edges,edgeLabels)
+    # exit(0)
+    G = nx.Graph()
+    G.add_edges_from(edges)
+    pos = nx.spring_layout(G)
+    plt.figure()    
+    nodeLabels = {node:node for node in G.nodes()} if isShowedID else {node:graph[node,node] for node in G.nodes()}
+    nx.draw(G,pos,edge_color='black',width=1,linewidths=1,
+        node_size=500,node_color='pink',alpha=0.9,
+        labels=nodeLabels)
+    
+    nx.draw_networkx_edge_labels(G,pos,edge_labels=edgeLabels,font_color='red')
+    plt.axis('off')
+    plt.show()
+
