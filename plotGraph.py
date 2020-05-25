@@ -1,11 +1,11 @@
 from utils import readGraphs,plotGraph
-from algorithms import GraphCollections
+from GraphCollection import GraphCollection
 
 
-graphs = readGraphs('mico.outx')
+graphs = readGraphs('mico-demo.outx')
 
 
 if __name__ == "__main__":
-    graphDB = GraphCollections(graphs,0.8)
+    graphDB = GraphCollection(graphs,0.8)
     for graph in graphs:
         plotGraph(graph)
