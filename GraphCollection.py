@@ -1,8 +1,9 @@
 import numpy as np
 from typing import List
 import operator
+from ExpansionGraph import ExpansionGraph
 
-class GraphCollections():
+class GraphCollection():
     tempTrees = {}
     def __init__(self,graphs_,theta_):
         self.graphs = graphs_
@@ -253,8 +254,87 @@ class GraphCollections():
             )
         return matrices
 
+    def freqentTrees(self,X,C):
+        S = []
+        newTempTrees = {}
+        for Y in C:
+            candidates = []
+            if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
+                candidates.append(self.joinCase3bFFSM(X,Y))
+            extensions = self.extendFFSM(X,Y)
+            if len(extensions) > 0:
+                candidates.extend(extensions)
+            for joinedTree in candidates:
+                indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
+                embedJoinedTree = np.array2string(joinedTree)
+                for i in self.tempTrees[np.array2string(X)].keys():
+                    topo= []
+                    for subGraph in self.tempTrees[np.array2string(X)][i]:
+                        linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
+                        for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
+                            if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
+                                pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
+                                pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
+                                pad[0,-1] = j
+                                topo.append(self.extend(subGraph,pad))
+                    if len(topo) > 0:
+                        if embedJoinedTree not in newTempTrees:
+                            newTempTrees[embedJoinedTree] = {}
+                            S.append(joinedTree)
+                        newTempTrees[embedJoinedTree][i] = topo
+ 
+            
+        temp = {}
+        nextCans = []
+        i = 0
+        for k,v in newTempTrees.items():
+            if len(v.items()) > self.theta*len(self.graphs):
+                temp[k] = v
+                nextCans.append(S[i])
+            i += 1
+        if len(temp.items()) == 0:
+            return []
+        self.tempTrees = temp
+        return nextCans
 
     def exploreGenericTree(self,C,R):
+        print("C\n",C)
+        if len(C) == 0:
+            return
+        Q = []
+        for X in C:
+            S = self.freqentTrees(X,C)
+            eg = ExpansionGraph(
+                S[0],
+                self.tempTrees[np.array2string(S[0])],
+                self.graphs,self.freqEdges,
+                self.theta
+            )
+            eg.expand()
+            exit(0)
+            print(S)
+            self.exploreGenericTree(S,R)
+            # S = S - R
+            # S = []
+            # for can in nextCans:
+            #     if can not in R:
+            #         S.append(can)
+            # U,V = self.exploreGenericTree(S,R)
+            # # Q = Q union U union Expansion(X)
+            # for u in U:
+            #     if u not in Q:
+            #         Q.append(u)
+            
+            # # R = R union {X} union V 
+            # if X not in R:
+            #     R.append(X)
+            # for v in V:
+            #     if v not in R:
+            #         R.append(v)
+        return Q,R
+
+
+    def exploreGenericTree2(self,C,R):
         print("C\n",C)
         Q = []
         for X in C:
@@ -282,9 +362,9 @@ class GraphCollections():
                         for subGraph in self.tempTrees[np.array2string(X)][i]:
                             linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
                             for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
-                                if self.graphs[i][linkedNode,j] == joinedTree[-1,-1] and j not in subGraph.diagonal():
+                                if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
                                     pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
-                                    pad[0,indexAddNode] = joinedTree[-1,-1]
+                                    pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
                                     pad[0,-1] = j
                                     topo.append(self.extend(subGraph,pad))
 
@@ -348,7 +428,10 @@ class GraphCollections():
             [15,15,16,3]
         ])
         # print(self.tempTrees)
-        self.exploreFFSM(self.freqEdges2matrix())
+        # self.exploreFFSM(self.freqEdges2matrix())
+        self.exploreGenericTree(self.freqEdges2matrix(),[])
+        # print(np.where(graphDemo == 0))
+        # eg = ExpansionGraph(self.tempTrees)
         # print("ca",self.canonicalForm(graphDemo))
         # print(self.extendFFSM(graphDemo,graphDemo2))
         # print(self.joinCase3bFFSM(graphDemo,graphDemo2))
