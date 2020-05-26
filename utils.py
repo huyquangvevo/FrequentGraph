@@ -55,7 +55,7 @@ def plotGraph(graph : np.ndarray,isShowedID=True):
         for id in indices:
             edges.append([i,i+id+1])
             edgeLabels[(i,i+id+1)] = graph[i,i+id+1]
-    print(edges,edgeLabels)
+    # print(edges,edgeLabels)
     # exit(0)
     G = nx.Graph()
     G.add_edges_from(edges)

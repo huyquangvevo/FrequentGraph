@@ -10,49 +10,40 @@ class GraphCollection():
         self.theta = theta_
         self.freqEdges = self.getFrequentEdges(self.graphs,self.theta)
         self.initTempTree()
+        # print("init temp Tree",self.tempTrees)
 
     def getFrequentEdges(self,graphs : List[np.ndarray],theta):
         frequentEdges = {}
-        for idGraph,graph in enumerate(graphs):
-            visited = [False]*len(graph)
+        for idGraph, graph in enumerate(graphs):
             edgesSet = set()
-            queue = []
-            start = 0
-            queue.append(start)
-            visited[start] = True
-            while queue:
-                s = queue.pop(0)
-                for i,v in enumerate(graph[s]):
-                    if i != s and v > 0:
-                        if visited[i] == False:
-                            # evaluating edge
-                            labelNodes = [graph[s,s],graph[i,i]]
-                            labelNodes = sorted(labelNodes)#,reverse=True)
-                            encodeEdges = (labelNodes[0],labelNodes[1],v)
-                            if encodeEdges not in edgesSet:
-                                if encodeEdges not in frequentEdges:
-                                    frequentEdges[encodeEdges] = {}
-                                    frequentEdges[encodeEdges]['freq'] = 1
-                                    frequentEdges[encodeEdges]['edges'] = {}
-                                else:
-                                    frequentEdges[encodeEdges]['freq'] += 1
-                                # frequentEdges[encodeEdges]['freq'] = 0 if encodeEdges not in frequentEdges else frequentEdges[encodeEdges]['freq'] + 1                      
-                                edgesSet.add(encodeEdges)
-                                frequentEdges[encodeEdges]['edges'][idGraph] = [(s,i) if graph[s,s] == labelNodes[0] else (i,s)]
-                            else:
-                                frequentEdges[encodeEdges]['edges'][idGraph].append((s,i) if graph[s,s] == labelNodes[0] else (i,s)) 
-                            # end evaluating
-                            queue.append(i)
-                            visited[i] = True
+            for i in range(graph.shape[0]):
+                indicesEdge = np.where(graph[i,i+1:] > 0)
+                for des in indicesEdge[0]:
+                    labelNodes = [graph[i,i],graph[i+des+1,i+des+1]]
+                    labelNodes = sorted(labelNodes)
+                    encodeEdges = (labelNodes[0],labelNodes[1],graph[i,i+des+1])
+                    if encodeEdges not in edgesSet:
+                        if encodeEdges not in frequentEdges:
+                            frequentEdges[encodeEdges] = {}
+                            frequentEdges[encodeEdges]['freq'] = 1
+                            frequentEdges[encodeEdges]['edges'] = {}
+                        else:
+                            frequentEdges[encodeEdges]['freq'] += 1
 
-        # tempFrequents = [{k: v['edges']} for k, v in frequentEdges.items() if v['freq'] >theta*len(graphs)]
+                        edgesSet.add(encodeEdges)
+                        frequentEdges[encodeEdges]['edges'][idGraph] = [(i,i+des+1) if graph[i,i] == labelNodes[0] else (des + i + 1,i)]
+                    else:
+                        frequentEdges[encodeEdges]['edges'][idGraph].append((i,i + des + 1) if graph[i,i] == labelNodes[0] else (des + i + 1,i))
+
         frequents = {}
         for k,v in frequentEdges.items():
             if v['freq'] > theta*len(graphs):
                 frequents[k] = v['edges']
         return frequents
 
+
     def initTempTree(self):
+        print("inInitTemp",self.freqEdges)
         for edge,matches in self.freqEdges.items():
             # print("edge",edge)
             # matrix = self.canonicalForm(np.array([[edge[0],edge[2]],[edge[2],edge[1]]]))
@@ -62,10 +53,13 @@ class GraphCollection():
             self.tempTrees[encodeEdge] = {}
             for i in matches.keys():# range(len(self.graphs)):
                 topo = []
+                # print("match i ",matches[i])
                 for e in matches[i]:
                     m = np.array([[e[0],edge[2]],[edge[2],e[1]]])
+                    # print("i",i,"m",m)
                     topo.append(m)
                 self.tempTrees[encodeEdge][i] = topo  
+        print("done init tempTree",self.tempTrees)
 
     def encodeGraph(self,graph):
         visited = [False]*len(graph)
@@ -254,7 +248,7 @@ class GraphCollection():
             )
         return matrices
 
-    def freqentTrees(self,X,C):
+    def frequentTrees(self,X,C):
         S = []
         newTempTrees = {}
         for Y in C:
@@ -295,24 +289,29 @@ class GraphCollection():
         if len(temp.items()) == 0:
             return []
         self.tempTrees = temp
-        return nextCans
+        return nextCans,temp
 
     def exploreGenericTree(self,C,R):
-        print("C\n",C)
+        # print("C\n",C)
         if len(C) == 0:
             return
         Q = []
         for X in C:
-            S = self.freqentTrees(X,C)
+            print("tempTree",self.tempTrees)
+            S = self.frequentTrees(X,C)
+            print("S freq",S)
+            print("tempTree after",self.tempTrees)
+            if len(S) == 0:
+                continue
             eg = ExpansionGraph(
-                S[0],
+                X,
                 self.tempTrees[np.array2string(S[0])],
                 self.graphs,self.freqEdges,
                 self.theta
             )
             eg.expand()
-            exit(0)
-            print(S)
+            # exit(0)
+            # print(S)
             self.exploreGenericTree(S,R)
             # S = S - R
             # S = []
