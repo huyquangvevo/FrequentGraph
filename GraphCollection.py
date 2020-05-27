@@ -2,6 +2,7 @@ import numpy as np
 from typing import List
 import operator
 from ExpansionGraph import ExpansionGraph
+from algorithm import string2matrix,extendOneNode
 
 class GraphCollection():
     tempTrees = {}
@@ -166,6 +167,8 @@ class GraphCollection():
         return extensions
 
 
+
+
     def exploreFFSM(self,C):
         print("C\n",C)
         if len(C) == 0:
@@ -248,22 +251,29 @@ class GraphCollection():
             )
         return matrices
 
-    def frequentTrees(self,X,C):
+    def frequentTrees(self,X,C,tempTrees):
         S = []
         newTempTrees = {}
+        print("X in",X)
+        print("C X in",C)
         for Y in C:
             candidates = []
             if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
-                candidates.append(self.joinCase3bFFSM(X,Y))
+                candidates.append(self.joinCase3bFFSM(X.copy(),Y.copy()))
+            print("XX",X)
+            print("YY",Y)
+            print("can join",candidates)
+            # extensions = extendOneNode(X,Y) #self.extendFFSM(X,Y)
             extensions = self.extendFFSM(X,Y)
             if len(extensions) > 0:
                 candidates.extend(extensions)
+            print("candidates",candidates)
             for joinedTree in candidates:
                 indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
                 embedJoinedTree = np.array2string(joinedTree)
-                for i in self.tempTrees[np.array2string(X)].keys():
+                for i in tempTrees[np.array2string(X)].keys():
                     topo= []
-                    for subGraph in self.tempTrees[np.array2string(X)][i]:
+                    for subGraph in tempTrees[np.array2string(X)][i]:
                         linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
                         for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
                             if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
@@ -281,136 +291,69 @@ class GraphCollection():
         temp = {}
         nextCans = []
         i = 0
+        
+        print("temp",newTempTrees)
         for k,v in newTempTrees.items():
-            if len(v.items()) > self.theta*len(self.graphs):
+            if len(v.items()) >= self.theta*len(self.graphs):
                 temp[k] = v
                 nextCans.append(S[i])
             i += 1
-        if len(temp.items()) == 0:
-            return []
-        self.tempTrees = temp
-        return nextCans,temp
+        # if len(temp.items()) == 0:
+            # return tempTrees,tempTrees
+        # self.tempTrees = temp
+        return temp,temp
 
-    def exploreGenericTree(self,C,R):
-        # print("C\n",C)
-        if len(C) == 0:
-            return
-        Q = []
-        for X in C:
-            print("tempTree",self.tempTrees)
-            S = self.frequentTrees(X,C)
+    
+
+    def exploreGenericTree(self,C : dict,R : dict,tempTrees):
+        print("C in\n",C)
+        print("Temptrees",tempTrees)
+        # if len(C) == 0:
+            # return {},R
+        Q = {}
+        for reprGroup,group in C.items():
+            X = string2matrix(reprGroup)
+            # print("X",X)
+            Y = [string2matrix(k) for k,v in C.items()]
+            S , newTempTrees = self.frequentTrees(X,Y,tempTrees.copy())
+            encodeX = np.array2string(X)
             print("S freq",S)
-            print("tempTree after",self.tempTrees)
-            if len(S) == 0:
-                continue
+            # S - R
+            for kR in R.keys():
+                if kR in S:
+                    del S[kR]
+
+            # print("tempTree after",self.tempTrees)
+            # if len(S) != 0:
+            U,V = self.exploreGenericTree(S.copy(),R.copy(),newTempTrees)
+            # print("S empty",S)
+            # print("R empty",R)
+            # print("U empty",U)
+            # print("V empty",V)
+            # print("X ok ex",X)
+            # print("encode X",encodeX)
+            # print("ok expansion",tempTrees)
+
             eg = ExpansionGraph(
                 X,
-                self.tempTrees[np.array2string(S[0])],
+                tempTrees[encodeX],
                 self.graphs,self.freqEdges,
                 self.theta
             )
-            eg.expand()
-            # exit(0)
-            # print(S)
-            self.exploreGenericTree(S,R)
-            # S = S - R
-            # S = []
-            # for can in nextCans:
-            #     if can not in R:
-            #         S.append(can)
-            # U,V = self.exploreGenericTree(S,R)
-            # # Q = Q union U union Expansion(X)
-            # for u in U:
-            #     if u not in Q:
-            #         Q.append(u)
             
-            # # R = R union {X} union V 
-            # if X not in R:
-            #     R.append(X)
-            # for v in V:
-            #     if v not in R:
-            #         R.append(v)
+            for k,v in U.items():
+                Q[k] = v
+            expansionX = eg.expand()
+            # print("expansion X",expansionX)
+            for k,v in expansionX.items():
+                Q[k] = v
+
+            R[encodeX] = tempTrees[encodeX]
+            for k,v in V.items():
+                R[k] = v
+        # print("Q",Q)
+        # print("R",R)
         return Q,R
-
-
-    def exploreGenericTree2(self,C,R):
-        print("C\n",C)
-        Q = []
-        for X in C:
-            S = []
-            newTempTrees = {}
-            for Y in C:
-                candidates = []
-                if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
-                    candidates.append(self.joinCase3bFFSM(X,Y))
-                    # print("join",candidates[0],"x",X,"y",Y)
-                extensions = self.extendFFSM(X,Y)
-                if len(extensions) > 0:
-                    # print("extension X\n",X,"\nY",Y )
-                    candidates.extend(extensions)
-                # print("X",X)
-                # print("Y",Y)
-                # print("candidates",candidates)
-                for joinedTree in candidates:
-                    # joinedTree = self.joinCase3bFFSM(X,Y)
-                    indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
-                    embedJoinedTree = np.array2string(joinedTree)
-                    S.append(joinedTree)
-                    for i in self.tempTrees[np.array2string(X)].keys():
-                        topo= []
-                        for subGraph in self.tempTrees[np.array2string(X)][i]:
-                            linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
-                            for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
-                                if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
-                                    pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
-                                    pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
-                                    pad[0,-1] = j
-                                    topo.append(self.extend(subGraph,pad))
-
-                        if len(topo) > 0:
-                            if embedJoinedTree not in newTempTrees:
-                                newTempTrees[embedJoinedTree] = {}
-                            newTempTrees[embedJoinedTree][i] = topo 
-            
-            temp = {}
-            nextCans = []
-            i = 0
-            for k,v in newTempTrees.items():
-                if len(v.items()) > self.theta*len(self.graphs):
-                    temp[k] = v
-                    nextCans.append(S[i])
-                i += 1
-
-            # S = S - R
-            S = []
-            # encodeReds = dict((np.array2string(k),1) for k in R)
-            for can in nextCans:
-                # if np.array2string(can) not in encodeReds:
-                if can not in R:
-                    S.append(can)
-            U,V = self.exploreGenericTree(S,R)
-            # encodeQ = dict((np.array2tring(k),1) for k in Q)
-            # Q = Q union U union Expansion(X)
-            for u in U:
-                if u not in Q:
-                    Q.append(u)
-            
-            # R = R union {X} union V 
-            if X not in R:
-                R.append(X)
-            for v in V:
-                if v not in R:
-                    R.append(v)
-
-        return Q,R 
-
-                
-
-            # self.tempTrees = temp
-            # print(S)
-            # print("next candidate",nextCans)
-            # Q = Q.extend(self.exploreFFSM(nextCans))
-    
 
     def frequentGraph(self):
         graphDemo = np.array([
@@ -428,7 +371,18 @@ class GraphCollection():
         ])
         # print(self.tempTrees)
         # self.exploreFFSM(self.freqEdges2matrix())
-        self.exploreGenericTree(self.freqEdges2matrix(),[])
+        
+        # self.exploreGenericTree(self.freqEdges2matrix(),[],self.tempTrees)
+        
+        results = self.exploreGenericTree(self.tempTrees,{},self.tempTrees)
+        # print("final results",results[0])
+        return [string2matrix(k) for k,v in results[0].items()]
+        # for k,v in results:
+            
+        
+        # print("result extend")
+        # print(extendOneNode(graphDemo,graphDemo2))
+
         # print(np.where(graphDemo == 0))
         # eg = ExpansionGraph(self.tempTrees)
         # print("ca",self.canonicalForm(graphDemo))
