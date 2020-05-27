@@ -2,13 +2,13 @@ from utils import readGraphs,plotGraph
 from GraphCollection import GraphCollection
 
 
-graphs = readGraphs('mico.outx')
+graphs = readGraphs('mico-demo.outx')
 
 
 if __name__ == "__main__":
     graphDB = GraphCollection(graphs,0.8)
     print(graphDB.freqEdges)
     # exit(0)
-    print("End frequent")
+    print("End frequent",len(graphs))
     for graph in graphs:
-        plotGraph(graph)
+        plotGraph(graph,isShowedID=False)

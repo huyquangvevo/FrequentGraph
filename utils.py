@@ -31,6 +31,8 @@ def read_graph_corpus(path, label_center_path=None):
                 target_id = int(data_line[2])
                 label = int(data_line[3])
                 edges[(source_id, target_id)] = label
+        if len(nodes) > 0:
+            graphs.append((nodes,edges))
     return graphs
 
 def readGraphs(path):

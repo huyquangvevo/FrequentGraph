@@ -14,11 +14,14 @@ if __name__ == "__main__":
     # plotGraph(graphDB.graphs[0])
     
     freqGraphs = graphDB.frequentGraph()
-    # print(graphDB.tempTrees)
-    exit()
-    for k,v in graphDB.tempTrees.items():
-        for kk,vv in v.items():
-            print("graph",kk)
-            plotGraph(vv[0],False)
+    print("freqGraphs",freqGraphs)
+    # exit()
+    for freqGraph in freqGraphs:
+        plotGraph(freqGraph,False)
+   
+    # for k,v in freqGraphs:
+    #     for kk,vv in v.items():
+    #         print("graph",kk)
+    #         plotGraph(vv[0],False)
     # print(freqGraphs)
     
