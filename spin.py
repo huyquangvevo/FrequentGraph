@@ -1,8 +1,11 @@
 from utils import readGraphs,plotGraph
 from GraphCollection import GraphCollection
+import pandas as pd
+import numpy as np
 
 
-graphs = readGraphs('mico-demo.outx')
+datasets = "mico"
+graphs = readGraphs('{}.outx'.format(datasets))
 
 
 if __name__ == "__main__":
@@ -15,10 +18,13 @@ if __name__ == "__main__":
     
     freqGraphs = graphDB.frequentGraph()
     print("freqGraphs",freqGraphs)
+    df = pd.DataFrame({"MaxSubgraph" : [np.array2string(g) for g in freqGraphs]})
+    df.to_csv("result-{}.csv".format(datasets),index=False)
     # exit()
     for freqGraph in freqGraphs:
         plotGraph(freqGraph,False)
    
+
     # for k,v in freqGraphs:
     #     for kk,vv in v.items():
     #         print("graph",kk)

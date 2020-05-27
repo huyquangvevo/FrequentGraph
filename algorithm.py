@@ -1,12 +1,14 @@
 import numpy as np
 
 def string2matrix(st):
-    strMatrix = st[1:-1]
-    rows = strMatrix.split("\n ")
+    strMatrix = st[2:-2]
+    rows = strMatrix.split("]\n [")
     # print(row)
+    print("st",st)
     matrix = []
     for row in rows:
-        matrix.append(np.fromstring(row[1:-1],dtype=int,sep=' '))
+        rowClean = row.replace("\n","")
+        matrix.append(np.fromstring(rowClean,dtype=int,sep=' '))
     # print(np.array(matrix))
     return np.array(matrix).copy()
 

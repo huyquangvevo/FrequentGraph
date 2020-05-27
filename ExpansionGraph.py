@@ -17,8 +17,8 @@ class ExpansionGraph():
         # mapEdges = {(15,30) : 10}
         # print("freqEdges",freqEdges)
         indices = np.where(self.matrixAdj == 0)
-        print("matrix",self.matrixAdj)
-        print("indices",indices)
+        # print("matrix",self.matrixAdj)
+        # print("indices",indices)
         canEdges = []
         for i in range(len(indices[0])):
             iR = indices[0][i]
@@ -57,7 +57,7 @@ class ExpansionGraph():
         return
     
     def expand(self):
-        print("canEdges",self.canEdges)
+        # print("canEdges",self.canEdges)
         # for k,v in self.spaceGraphs.items():
             # for i,g in v.items():
                 # plotGraph(g[0])
@@ -80,21 +80,21 @@ class ExpansionGraph():
         eqGraphClasses = {}
         canTree = canonicalForm(self.matrixAdj)    
         if len(frequents.items()) > 0:
-            print("result",frequents)
+            # print("result",frequents)
             for k,v in frequents.items():
                 idFirstGraph = list(v.keys())[0]
                 subGraph = np.copy(v[idFirstGraph][0])
                 # subGraph = np.copy(firstGraph[0])
                 for i in range(subGraph.shape[0]):
                     subGraph[i,i] = self.graphs[idFirstGraph][subGraph[i,i],subGraph[i,i]]
-                print("subgraph",subGraph)
-                print("can subgraph",canonicalForm(subGraph))
-                print("tree",self.matrixAdj)
-                print("canTree",canTree)
-                # if canonicalForm(subGraph) == canTree:
-                eqGraphClasses[np.array2string(subGraph)] = v
+                # print("subgraph",subGraph)
+                # print("can subgraph",canonicalForm(subGraph))
+                # print("tree",self.matrixAdj)
+                # print("canTree",canTree)
+                if canonicalForm(subGraph) == canTree:
+                    eqGraphClasses[np.array2string(subGraph)] = v
             # exit(0)
-        print("eqGraphClass",eqGraphClasses)
+        # print("eqGraphClass",eqGraphClasses)
         # print("current form tree",canonicalForm(self.matrixAdj))
 
         return eqGraphClasses

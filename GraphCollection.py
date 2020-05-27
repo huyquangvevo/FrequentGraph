@@ -44,7 +44,6 @@ class GraphCollection():
 
 
     def initTempTree(self):
-        print("inInitTemp",self.freqEdges)
         for edge,matches in self.freqEdges.items():
             # print("edge",edge)
             # matrix = self.canonicalForm(np.array([[edge[0],edge[2]],[edge[2],edge[1]]]))
@@ -60,7 +59,6 @@ class GraphCollection():
                     # print("i",i,"m",m)
                     topo.append(m)
                 self.tempTrees[encodeEdge][i] = topo  
-        print("done init tempTree",self.tempTrees)
 
     def encodeGraph(self,graph):
         visited = [False]*len(graph)
@@ -170,7 +168,7 @@ class GraphCollection():
 
 
     def exploreFFSM(self,C):
-        print("C\n",C)
+        # print("C\n",C)
         if len(C) == 0:
             return
         # newTempTrees = {}
@@ -254,20 +252,22 @@ class GraphCollection():
     def frequentTrees(self,X,C,tempTrees):
         S = []
         newTempTrees = {}
-        print("X in",X)
-        print("C X in",C)
+        # print("X in",X)
+        # print("C X in",C)
         for Y in C:
             candidates = []
+            print("X",X)
+            print("Y",Y)
             if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
                 candidates.append(self.joinCase3bFFSM(X.copy(),Y.copy()))
-            print("XX",X)
-            print("YY",Y)
-            print("can join",candidates)
-            # extensions = extendOneNode(X,Y) #self.extendFFSM(X,Y)
-            extensions = self.extendFFSM(X,Y)
+            # print("XX",X)
+            # print("YY",Y)
+            # print("can join",candidates)
+            extensions = extendOneNode(X,Y) #self.extendFFSM(X,Y)
+            # extensions = self.extendFFSM(X,Y)
             if len(extensions) > 0:
                 candidates.extend(extensions)
-            print("candidates",candidates)
+            # print("candidates",candidates)
             for joinedTree in candidates:
                 indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
                 embedJoinedTree = np.array2string(joinedTree)
@@ -292,7 +292,7 @@ class GraphCollection():
         nextCans = []
         i = 0
         
-        print("temp",newTempTrees)
+        # print("temp",newTempTrees)
         for k,v in newTempTrees.items():
             if len(v.items()) >= self.theta*len(self.graphs):
                 temp[k] = v
@@ -307,9 +307,7 @@ class GraphCollection():
 
     def exploreGenericTree(self,C : dict,R : dict,tempTrees):
         print("C in\n",C)
-        print("Temptrees",tempTrees)
-        # if len(C) == 0:
-            # return {},R
+        # print("Temptrees",tempTrees)
         Q = {}
         for reprGroup,group in C.items():
             X = string2matrix(reprGroup)
@@ -317,7 +315,7 @@ class GraphCollection():
             Y = [string2matrix(k) for k,v in C.items()]
             S , newTempTrees = self.frequentTrees(X,Y,tempTrees.copy())
             encodeX = np.array2string(X)
-            print("S freq",S)
+            # print("S freq",S)
             # S - R
             for kR in R.keys():
                 if kR in S:
@@ -351,7 +349,7 @@ class GraphCollection():
             R[encodeX] = tempTrees[encodeX]
             for k,v in V.items():
                 R[k] = v
-        # print("Q",Q)
+        # print("Q",len(Q.items))
         # print("R",R)
         return Q,R
 
@@ -376,7 +374,10 @@ class GraphCollection():
         
         results = self.exploreGenericTree(self.tempTrees,{},self.tempTrees)
         # print("final results",results[0])
-        return [string2matrix(k) for k,v in results[0].items()]
+        numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
+        indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+        return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+        # freqGraphs = [for k in freqGraphs]
         # for k,v in results:
             
         
