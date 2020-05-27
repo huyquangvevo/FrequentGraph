@@ -256,8 +256,8 @@ class GraphCollection():
         # print("C X in",C)
         for Y in C:
             candidates = []
-            print("X",X)
-            print("Y",Y)
+            # print("X",X)
+            # print("Y",Y)
             if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
                 candidates.append(self.joinCase3bFFSM(X.copy(),Y.copy()))
             # print("XX",X)
@@ -306,7 +306,7 @@ class GraphCollection():
     
 
     def exploreGenericTree(self,C : dict,R : dict,tempTrees):
-        print("C in\n",C)
+        # print("C in\n",C)
         # print("Temptrees",tempTrees)
         Q = {}
         for reprGroup,group in C.items():

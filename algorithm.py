@@ -4,7 +4,6 @@ def string2matrix(st):
     strMatrix = st[2:-2]
     rows = strMatrix.split("]\n [")
     # print(row)
-    print("st",st)
     matrix = []
     for row in rows:
         rowClean = row.replace("\n","")
