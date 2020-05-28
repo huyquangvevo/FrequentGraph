@@ -1,2 +1,2 @@
-# HUY_SPIN
-SPIN of HUY
+# Runing
+python spin.py

@@ -307,7 +307,7 @@ class GraphCollection():
 
     def exploreGenericTree(self,C : dict,R : dict,tempTrees):
         # print("C in\n",C)
-        # print("Temptrees",tempTrees)
+        print("Temptrees len", len(tempTrees.items()))
         Q = {}
         for reprGroup,group in C.items():
             X = string2matrix(reprGroup)
