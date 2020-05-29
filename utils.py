@@ -33,7 +33,7 @@ def read_graph_corpus(path, label_center_path=None):
                 edges[(source_id, target_id)] = label
         if len(nodes) > 0:
             graphs.append((nodes,edges))
-    return graphs
+    return graphs#[10:]
 
 def readGraphs(path):
     rawGraphs = read_graph_corpus(path)
@@ -46,7 +46,7 @@ def readGraphs(path):
         for e,l in graph[1].items():
             g[e[0],e[1]] = l
             g[e[1],e[0]] = l
-        graphs.append(g)
+        graphs.append(g[:12,:12])
     return graphs
 
 def plotGraph(graph : np.ndarray,isShowedID=True):
