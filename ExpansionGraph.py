@@ -10,7 +10,6 @@ class ExpansionGraph():
         self.matrixAdj = matrixAdj_
         self.spaceGraphs = {np.array2string(matrixAdj_):topoGraphs_}
         self.canEdges = self.getCandidateEdges(freqEdges_)
-        # print("canEdges",self.canEdges)
 
     def getCandidateEdges(self,freqEdges):
         mapEdges = {(e[0],e[1]):e[2] for e in freqEdges.keys()}

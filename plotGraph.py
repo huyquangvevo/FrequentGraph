@@ -2,7 +2,7 @@ from utils import readGraphs,plotGraph
 from GraphCollection import GraphCollection
 
 
-graphs = readGraphs('mico-demo.outx')
+graphs = readGraphs('mico.outx')
 
 
 if __name__ == "__main__":

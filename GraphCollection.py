@@ -2,7 +2,8 @@ import numpy as np
 from typing import List
 import operator
 from ExpansionGraph import ExpansionGraph
-from algorithm import string2matrix,extendOneNode
+from algorithm import string2matrix,extendOneNode,canonicalForm
+import datetime
 
 class GraphCollection():
     tempTrees = {}
@@ -249,12 +250,13 @@ class GraphCollection():
             )
         return matrices
 
-    def frequentTrees(self,X,C,tempTrees):
+    def frequentTrees(self,X,C):
         S = []
         newTempTrees = {}
+        print("timestamp frequent trees",datetime.datetime.now())
         # print("X in",X)
         # print("C X in",C)
-        for Y in C:
+        for Y in [string2matrix(k) for k,v in C.items()]:
             candidates = []
             # print("X",X)
             # print("Y",Y)
@@ -271,9 +273,9 @@ class GraphCollection():
             for joinedTree in candidates:
                 indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
                 embedJoinedTree = np.array2string(joinedTree)
-                for i in tempTrees[np.array2string(X)].keys():
+                for i in C[np.array2string(X)].keys():
                     topo= []
-                    for subGraph in tempTrees[np.array2string(X)][i]:
+                    for subGraph in C[np.array2string(X)][i]:
                         linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
                         for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
                             if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
@@ -289,41 +291,51 @@ class GraphCollection():
  
             
         temp = {}
-        nextCans = []
-        i = 0
         
-        # print("temp",newTempTrees)
         for k,v in newTempTrees.items():
             if len(v.items()) >= self.theta*len(self.graphs):
                 temp[k] = v
-                nextCans.append(S[i])
-            i += 1
-        # if len(temp.items()) == 0:
-            # return tempTrees,tempTrees
-        # self.tempTrees = temp
-        return temp,temp
+        return temp
 
     
 
-    def exploreGenericTree(self,C : dict,R : dict,tempTrees):
+    def exploreGenericTree(self,C : dict,R : dict):
         # print("C in\n",C)
-        print("Temptrees len", len(tempTrees.items()))
+        # print("Temptrees len", len(tempTrees.items()))
+        print("timestamp",datetime.datetime.now())
         Q = {}
+        # print("reprGroup",C)
         for reprGroup,group in C.items():
             X = string2matrix(reprGroup)
             # print("X",X)
-            Y = [string2matrix(k) for k,v in C.items()]
-            S , newTempTrees = self.frequentTrees(X,Y,tempTrees.copy())
+            # Y = [string2matrix(k) for k,v in C.items()]
+            # print("Y",Y)
+            print('begin frequent trees')
+            # print("X ",X)
+            # print("C copy",C.copy())
+            S = self.frequentTrees(X,C.copy())
+            print("afterFrequentTRee",S)
             encodeX = np.array2string(X)
             # print("S freq",S)
             # S - R
+            canonicalS = {canonicalForm(string2matrix(k)):k for k in S.keys()}
+            # print("SSS before",S.keys())
             for kR in R.keys():
-                if kR in S:
-                    del S[kR]
+                # if kR in S:
+                    # print("kR in S",kR)
+                    # del S[kR]
+                canonicalKR = canonicalForm(string2matrix(kR))
+                if canonicalKR in canonicalS.keys():
+                    # print("canonicalKR",canonicalKR)
+                    # print("canS",canonicalS)
+                    # print("SSS",S.keys())
+                    if canonicalS[canonicalKR] in S:
+                        del S[canonicalS[canonicalKR]]
+                    
 
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
-            U,V = self.exploreGenericTree(S.copy(),R.copy(),newTempTrees)
+            U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
             # print("U empty",U)
@@ -334,7 +346,7 @@ class GraphCollection():
 
             eg = ExpansionGraph(
                 X,
-                tempTrees[encodeX],
+                C[encodeX],
                 self.graphs,self.freqEdges,
                 self.theta
             )
@@ -346,9 +358,10 @@ class GraphCollection():
             for k,v in expansionX.items():
                 Q[k] = v
 
-            R[encodeX] = tempTrees[encodeX]
+            R[encodeX] = C[encodeX]
             for k,v in V.items():
                 R[k] = v
+            # del eg
         # print("Q",len(Q.items))
         # print("R",R)
         return Q,R
@@ -372,11 +385,15 @@ class GraphCollection():
         
         # self.exploreGenericTree(self.freqEdges2matrix(),[],self.tempTrees)
         
-        results = self.exploreGenericTree(self.tempTrees,{},self.tempTrees)
+        results = self.exploreGenericTree(self.tempTrees,{})
         # print("final results",results[0])
-        numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
-        indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
-        return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+        try:
+            print("final result",results)
+            numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
+            indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+            return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+        except:
+            return []
         # freqGraphs = [for k in freqGraphs]
         # for k,v in results:
             
