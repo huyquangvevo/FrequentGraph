@@ -36,9 +36,9 @@ class ExpansionGraph():
     def searchGraph(self,graph,canEdges):
         newTempGraphs = {}
         encodeGraph = np.array2string(graph)
-       
+        print("len canEdges",len(canEdges))
         for i,edge in enumerate(canEdges):
-            canGraph = self.joinEdge(np.ndarray.copy(graph),edge)
+            canGraph = self.joinEdge(graph.copy(),edge)
             embedCanGraph = np.array2string(canGraph)
             for j in self.spaceGraphs[encodeGraph].keys():
                 topo = []
@@ -51,12 +51,21 @@ class ExpansionGraph():
                     if embedCanGraph not in self.spaceGraphs:
                         self.spaceGraphs[embedCanGraph] = {}
                     self.spaceGraphs[embedCanGraph][j] = topo
-            self.searchGraph(canGraph,canEdges[i+1:]) if (embedCanGraph in self.spaceGraphs) else self.searchGraph(graph,canEdges[i+1:])
-            
+            # self.searchGraph(canGraph,canEdges[i+1:]) if (embedCanGraph in self.spaceGraphs) else self.searchGraph(graph,canEdges[i+1:])
+            if embedCanGraph in self.spaceGraphs:
+                self.searchGraph(canGraph,canEdges[i+1:]) 
+            else:
+                self.searchGraph(graph,canEdges[i+1:])
+
+            # print("lenCanEdges in loop",len(canEdges))
+            # print("loop in space graphs",i)   
+        print("return spaces",len(self.spaceGraphs.items()))
         return
+
+    
     
     def expand(self):
-        # print("canEdges",self.canEdges)
+        print("canEdges",len(self.canEdges))
         # for k,v in self.spaceGraphs.items():
             # for i,g in v.items():
                 # plotGraph(g[0])
@@ -68,8 +77,11 @@ class ExpansionGraph():
         #             g[0][i,i] = self.graphs[idGraph][g[0][i,i],g[0][i,i]]
         #         # print("g after",g[0])
         #         plotGraph(g[0],isShowedID=False)
+        
+        # self.searchGraph(self.matrixAdj,self.canEdges)
+        self.searchGraph(self.matrixAdj,0)
 
-        self.searchGraph(self.matrixAdj,self.canEdges)
+        print("space graphs",self.spaceGraphs)
         frequents = {}
         for k,v in self.spaceGraphs.items():
             if len(v.items()) >= self.theta * len(self.graphs):
@@ -93,7 +105,7 @@ class ExpansionGraph():
                 if canonicalForm(subGraph) == canTree:
                     eqGraphClasses[np.array2string(subGraph)] = v
             # exit(0)
-        # print("eqGraphClass",eqGraphClasses)
+        print("eqGraphClass",eqGraphClasses)
         # print("current form tree",canonicalForm(self.matrixAdj))
 
         return eqGraphClasses

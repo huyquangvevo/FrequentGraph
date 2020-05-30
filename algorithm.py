@@ -30,7 +30,7 @@ def encodeGraph(graph):
 
     return code
 
-def canonicalForm(graph: np.ndarray):
+def canonicalForm(graph: np.ndarray,code=True):
     labelNodes = graph.diagonal()
     start = np.zeros((1,1),dtype=int)
     maxNodes = np.where(labelNodes == np.max(labelNodes))[0]
@@ -73,7 +73,7 @@ def canonicalForm(graph: np.ndarray):
 
             S = newCandidates[max(newCandidates.keys())]
         canonical = S if canonical["code"] < S["code"] else canonical 
-    return canonical["code"]
+    return canonical["code"] if code else canonical["tree"]
 
 def extend(X: np.ndarray,pad: np.ndarray):
     n = X.shape[0]
@@ -90,6 +90,25 @@ def extendOneNode(X: np.ndarray, Y: np.ndarray):
     extensions = []
     for i,lNode in enumerate(xLabelNodes):
         # print("node",lNode,"i",i)
+        indices = np.where(Y.diagonal() == lNode)[0]
+        for iY in indices:
+            for j in np.where(Y[iY] > 0)[0]:
+                if j != iY:
+                    pad = np.zeros((1,n+1),dtype=int)
+                    pad[0,-1] = Y[j,j]
+                    pad[0,i] = Y[iY,j]
+                    extensions.append(extend(X.copy(),pad))
+    return extensions
+
+def extendByCore(X: np.ndarray, Y: np.ndarray):
+    # print(X,Y)
+    n = X.shape[0]
+    xLabelNodes = X.diagonal()#np.unique(X.diagonal())
+    extensions = []
+    for i,lNode in enumerate(xLabelNodes):
+        # print("node",lNode,"i",i)
+        if i != n -1:
+            continue
         indices = np.where(Y.diagonal() == lNode)[0]
         for iY in indices:
             for j in np.where(Y[iY] > 0)[0]:

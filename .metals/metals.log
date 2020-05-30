@@ -1,0 +1,7 @@
+2020.05.29 08:23:37 INFO  started: Metals version 0.9.0 in workspace 'D:\ICT\Griffith\SPIN\HUY_SPIN'
+2020.05.29 08:23:39 INFO  time: initialize in 2.34s
+2020.05.29 08:23:46 WARN  no build tool detected in workspace 'D:\ICT\Griffith\SPIN\HUY_SPIN'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. 
+May 29, 2020 8:25:30 AM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTraceNotification
+May 29, 2020 11:36:33 AM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTraceNotification

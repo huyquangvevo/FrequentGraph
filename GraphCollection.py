@@ -22,7 +22,7 @@ class GraphCollection():
                 indicesEdge = np.where(graph[i,i+1:] > 0)
                 for des in indicesEdge[0]:
                     labelNodes = [graph[i,i],graph[i+des+1,i+des+1]]
-                    labelNodes = sorted(labelNodes)
+                    labelNodes = sorted(labelNodes)#,reverse=True)
                     encodeEdges = (labelNodes[0],labelNodes[1],graph[i,i+des+1])
                     if encodeEdges not in edgesSet:
                         if encodeEdges not in frequentEdges:
@@ -39,7 +39,7 @@ class GraphCollection():
 
         frequents = {}
         for k,v in frequentEdges.items():
-            if v['freq'] > theta*len(graphs):
+            if v['freq'] >= theta*len(graphs):
                 frequents[k] = v['edges']
         return frequents
 
@@ -50,6 +50,8 @@ class GraphCollection():
             # matrix = self.canonicalForm(np.array([[edge[0],edge[2]],[edge[2],edge[1]]]))
             matrix = np.array([[edge[0],edge[2]],[edge[2],edge[1]]])
             # print("matrix",matrix)
+            # matrix = canonicalForm(matrix,code=False)
+            # print("after matrix",matrix)
             encodeEdge = np.array2string(matrix)
             self.tempTrees[encodeEdge] = {}
             for i in matches.keys():# range(len(self.graphs)):
@@ -294,6 +296,7 @@ class GraphCollection():
         
         for k,v in newTempTrees.items():
             if len(v.items()) >= self.theta*len(self.graphs):
+                # temp[np.array2string(canonicalForm(string2matrix(k),code=False))] = v
                 temp[k] = v
         return temp
 
@@ -314,27 +317,21 @@ class GraphCollection():
             # print("X ",X)
             # print("C copy",C.copy())
             S = self.frequentTrees(X,C.copy())
-            print("afterFrequentTRee",S)
             encodeX = np.array2string(X)
             # print("S freq",S)
             # S - R
             canonicalS = {canonicalForm(string2matrix(k)):k for k in S.keys()}
             # print("SSS before",S.keys())
             for kR in R.keys():
-                # if kR in S:
-                    # print("kR in S",kR)
-                    # del S[kR]
                 canonicalKR = canonicalForm(string2matrix(kR))
                 if canonicalKR in canonicalS.keys():
-                    # print("canonicalKR",canonicalKR)
-                    # print("canS",canonicalS)
-                    # print("SSS",S.keys())
                     if canonicalS[canonicalKR] in S:
                         del S[canonicalS[canonicalKR]]
                     
 
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
+            print("afterFrequentTRee",S)
             U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
@@ -342,7 +339,7 @@ class GraphCollection():
             # print("V empty",V)
             # print("X ok ex",X)
             # print("encode X",encodeX)
-            # print("ok expansion",tempTrees)
+            print("ok expansion",X)
 
             eg = ExpansionGraph(
                 X,
@@ -384,7 +381,7 @@ class GraphCollection():
         # self.exploreFFSM(self.freqEdges2matrix())
         
         # self.exploreGenericTree(self.freqEdges2matrix(),[],self.tempTrees)
-        
+
         results = self.exploreGenericTree(self.tempTrees,{})
         # print("final results",results[0])
         try:

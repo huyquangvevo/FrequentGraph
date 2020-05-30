@@ -14,6 +14,7 @@ if __name__ == "__main__":
     # frequentGraph(graphs,frequents)
     
     graphDB = GraphCollection(graphs,0.8)
+    print("Frequent edges",graphDB.freqEdges)
     # plotGraph(graphDB.graphs[0])
     
     freqGraphs = graphDB.frequentGraph()
