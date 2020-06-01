@@ -1,11 +1,18 @@
 from utils import readGraphs,plotGraph
 from GraphCollection import GraphCollection
-import pandas as pd
+# import pandas as pd
+from algorithm import string2matrix
 import numpy as np
-
+import json 
 
 datasets = "mico"
 graphs = readGraphs('{}.outx'.format(datasets))
+
+def extractResultGraph(results):
+    numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results.items()])
+    indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+    return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+
 
 
 if __name__ == "__main__":
@@ -13,15 +20,18 @@ if __name__ == "__main__":
     # print(frequents)
     # frequentGraph(graphs,frequents)
     
-    graphDB = GraphCollection(graphs,0.8)
+    graphDB = GraphCollection(graphs,1.0)
     print("Frequent edges",graphDB.freqEdges)
     # plotGraph(graphDB.graphs[0])
     
     freqGraphs = graphDB.frequentGraph()
     print("freqGraphs",freqGraphs)
-    df = pd.DataFrame({"MaxSubgraph" : [np.array2string(g) for g in freqGraphs]})
-    df.to_csv("result-{}.csv".format(datasets),index=False)
+    with open('result-{}.json'.format(datasets), 'w') as fp:
+        json.dump(freqGraphs, fp)
+    # df = pd.DataFrame({"MaxSubgraph" : [np.array2string(g) for g in freqGraphs]})
+    # df.to_csv("result-{}.csv".format(datasets),index=False)
     # exit()
+    freqGraph = extractResultGraph(freqGraphs)
     for freqGraph in freqGraphs:
         plotGraph(freqGraph,False)
    
