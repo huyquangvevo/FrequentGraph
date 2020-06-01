@@ -16,7 +16,7 @@ def read_graph_corpus(path, label_center_path=None):
             if 't' in line:
                 if len(nodes) > 0:
                     graphs.append((nodes, edges))
-                    if len(graphs) > 20:
+                    if len(graphs) > 9:
                         break
                 nodes = {}
                 edges = {}

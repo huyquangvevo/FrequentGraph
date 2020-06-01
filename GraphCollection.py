@@ -9,7 +9,7 @@ class GraphCollection():
     tempTrees = {}
     def __init__(self,graphs_,theta_):
         self.graphs = graphs_
-        self.theta = theta_
+        self.theta = theta_ * len(graphs_)
         self.freqEdges = self.getFrequentEdges(self.graphs,self.theta)
         self.initTempTree()
         # print("init temp Tree",self.tempTrees)
@@ -39,7 +39,7 @@ class GraphCollection():
 
         frequents = {}
         for k,v in frequentEdges.items():
-            if v['freq'] >= theta*len(graphs):
+            if v['freq'] >= theta:
                 frequents[k] = v['edges']
         return frequents
 
@@ -167,6 +167,9 @@ class GraphCollection():
                     extensions.append(self.extend(X,pad))
         return extensions
 
+    # def hasNoExternalAssEdge(self,tree: np.ndarray):
+        # for 
+
 
 
 
@@ -226,10 +229,10 @@ class GraphCollection():
             i = 0
             print("new tempTrees",newTempTrees)
             # print("theta",self.theta," len",len(self.graphs))
-            print("threshold",self.theta*len(self.graphs))
+            print("threshold",self.theta)
             for k,v in newTempTrees.items():
                 # print("len items",len(v.items()))
-                if len(v.items()) > self.theta*len(self.graphs):
+                if len(v.items()) > self.theta:
                     temp[k] = v
                     nextCans.append(S[i])
                     # print("S i",S[i])
@@ -295,7 +298,7 @@ class GraphCollection():
         temp = {}
         
         for k,v in newTempTrees.items():
-            if len(v.items()) >= self.theta*len(self.graphs):
+            if len(v.items()) >= self.theta:
                 # temp[np.array2string(canonicalForm(string2matrix(k),code=False))] = v
                 temp[k] = v
         return temp
@@ -331,7 +334,7 @@ class GraphCollection():
 
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
-            print("afterFrequentTRee",S)
+            # print("afterFrequentTRee",S)
             U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
@@ -342,7 +345,7 @@ class GraphCollection():
             print("ok expansion",X)
 
             eg = ExpansionGraph(
-                X,
+                X.copy(),
                 C[encodeX],
                 self.graphs,self.freqEdges,
                 self.theta
@@ -386,9 +389,10 @@ class GraphCollection():
         # print("final results",results[0])
         try:
             print("final result",results)
-            numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
-            indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
-            return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+            # numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
+            # indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+            return results[0]
+            # return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
         except:
             return []
         # freqGraphs = [for k in freqGraphs]

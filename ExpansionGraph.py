@@ -8,10 +8,16 @@ class ExpansionGraph():
         self.graphs = graphs_
         self.theta = theta_
         self.matrixAdj = matrixAdj_
+        self.subGraphs = topoGraphs_
         self.spaceGraphs = {np.array2string(matrixAdj_):topoGraphs_}
-        self.canEdges = self.getCandidateEdges(freqEdges_)
+        self.canEdges = [] #self.setCandidateEdges(freqEdges_)
+        self.associativeEdges = [] #self.setAssociativeEdge()
+        self.setCandidateEdges(freqEdges_)
+        self.setAssociativeEdge()
+        print("associate edges",self.associativeEdges)
 
-    def getCandidateEdges(self,freqEdges):
+
+    def setCandidateEdges(self,freqEdges):
         mapEdges = {(e[0],e[1]):e[2] for e in freqEdges.keys()}
         # mapEdges = {(15,30) : 10}
         # print("freqEdges",freqEdges)
@@ -26,7 +32,22 @@ class ExpansionGraph():
             if k in mapEdges and iR <= iC:
                 canEdges.append((iR,iC,mapEdges[k]))   
         # print(canEdges)
-        return canEdges
+        self.canEdges = canEdges
+        # return canEdges
+
+    def setAssociativeEdge(self):
+        for edge in self.canEdges:
+            isAssociative = True
+            for graph in self.subGraphs.keys():
+                for sub in self.subGraphs[graph]:
+                    if self.graphs[graph][sub[edge[0],edge[0]],sub[edge[1],edge[1]]] != edge[2]:
+                        isAssociative = False
+                        break
+                if not isAssociative:
+                    break
+            if isAssociative:
+                self.associativeEdges.append(edge)
+
 
     def joinEdge(self,graph: np.ndarray,edge):
         graph[edge[0],edge[1]] = edge[2]
@@ -34,9 +55,24 @@ class ExpansionGraph():
         return graph
 
     def searchGraph(self,graph,canEdges):
-        newTempGraphs = {}
+        newTempGrapsearchGraphhs = {}
         encodeGraph = np.array2string(graph)
-        print("len canEdges",len(canEdges))
+
+        #bottom-up pruning
+        codeFullGraph = self.mergeToGraph(graph,canEdges)
+        if codeFullGraph in self.spaceGraphs:
+            if len(self.spaceGraphs[codeFullGraph].items()) > self.theta:
+                print("bottom-up aval",self.spaceGraphs[codeFullGraph])
+                # exit(0)
+                return {
+                    codeFullGraph : self.spaceGraphs[codeFullGraph]
+                }
+
+
+        #end bottom-up  
+            
+
+        # print("len canEdges",len(canEdges))
         for i,edge in enumerate(canEdges):
             canGraph = self.joinEdge(graph.copy(),edge)
             embedCanGraph = np.array2string(canGraph)
@@ -57,15 +93,80 @@ class ExpansionGraph():
             else:
                 self.searchGraph(graph,canEdges[i+1:])
 
-            # print("lenCanEdges in loop",len(canEdges))
-            # print("loop in space graphs",i)   
-        print("return spaces",len(self.spaceGraphs.items()))
         return
 
-    
-    
+    def mergeToGraph(self,graph,canEdges):
+        encodeGraph = np.array2string(graph)
+        fullGraph = graph.copy()
+        for i,edge in enumerate(canEdges):
+            fullGraph = self.joinEdge(fullGraph,edge)
+        # print("full Graph",fullGraph)
+        codeFullGraph = np.array2string(fullGraph)
+        for idGraph in self.spaceGraphs[encodeGraph].keys():
+            topo = []
+            for sub in self.spaceGraphs[encodeGraph][idGraph]:
+                subGraph = sub.copy()
+                flag = True
+                # print("beforeSubgraph",subGraph)
+                for i,edge in enumerate(canEdges):
+                    # print("edge",edge)
+                    # print("subGraphEdge",self.graphs[idGraph][subGraph[edge[0],edge[0]],subGraph[edge[1],edge[1]]])
+                    if  self.graphs[idGraph][subGraph[edge[0],edge[0]],subGraph[edge[1],edge[1]]] == edge[2]:
+                        subGraph = self.joinEdge(subGraph,edge)
+                    else:
+                        flag = False
+                        break
+                # print("subGraph",subGraph,flag)
+                if flag:
+                    topo.append(subGraph)
+            if len(topo) > 0:
+                if codeFullGraph not in self.spaceGraphs:
+                    self.spaceGraphs[codeFullGraph] = {}
+                self.spaceGraphs[codeFullGraph][idGraph] = topo
+                # print("codeTopo2",codeFullGraph)
+                # print("hasTopo",self.spaceGraphs.keys())
+            # print("topo",topo)
+            # print("encodeGraph",self.spaceGraphs[encodeGraph])
+        # print('inMerge fullGraph',codeFullGraph)
+        # print("returnMerge",self.spaceGraphs.keys())
+        return codeFullGraph
+
+    def checkLethal(self):
+        initialTree = self.matrixAdj.copy()
+        for asEdge in self.associativeEdges:
+            self.matrixAdj = self.joinEdge(self.matrixAdj,asEdge)
+        
+        if canonicalForm(initialTree) != canonicalForm(self.matrixAdj):
+            return True
+        
+        # print("spaceGraphsInMerge",self.spaceGraphs.keys())
+        # print("matrix",self.matrixAdj)
+        # print("ass",self.associativeEdges)
+        self.mergeToGraph(initialTree,self.associativeEdges)
+        # print("afterMergeMatrix",self.spaceGraphs.keys())
+        return False 
+
+        # print("initialTree",initialTree)
+        # print("matrix lethal",self.matrixAdj)
+        # return True if canonicalForm(initialTree) != canonicalForm(self.matrixAdj) else initialTree
+
+    def eliminateAssEdges(self):
+        # self.canEdges = list(set(self.canEdges) - set(self.associativeEdges))
+        # print("can edges",self.canEdges)
+        # print("associative edges",self.associativeEdges)
+        newCans = []
+        for edge in self.canEdges:
+            if edge not in self.associativeEdges:
+                newCans.append(edge)
+        self.canEdges = newCans
+        # print("after canEdges",self.canEdges)    
+
     def expand(self):
-        print("canEdges",len(self.canEdges))
+        # print("canEdges",self.canEdges)
+        # print("associative edges",self.associativeEdges)
+        # print("isLethal",self.checkLethal())
+        # exit(0)
+
         # for k,v in self.spaceGraphs.items():
             # for i,g in v.items():
                 # plotGraph(g[0])
@@ -78,13 +179,21 @@ class ExpansionGraph():
         #         # print("g after",g[0])
         #         plotGraph(g[0],isShowedID=False)
         
-        # self.searchGraph(self.matrixAdj,self.canEdges)
-        self.searchGraph(self.matrixAdj,0)
+
+        if self.checkLethal():
+            return {}
+        
+        # print("before eliminate",self.canEdges)
+        self.eliminateAssEdges()
+        print("eliminated",self.canEdges)
+        # exit(0)
+
+        self.searchGraph(self.matrixAdj,self.canEdges)
 
         print("space graphs",self.spaceGraphs)
         frequents = {}
         for k,v in self.spaceGraphs.items():
-            if len(v.items()) >= self.theta * len(self.graphs):
+            if len(v.items()) >= self.theta:
                 frequents[k] = v
                 # break
         
