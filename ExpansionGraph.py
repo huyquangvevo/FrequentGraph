@@ -1,6 +1,6 @@
 import numpy as np
 from utils import plotGraph
-from algorithm import canonicalForm
+from algorithm import canonicalForm,string2matrix
 
 
 class ExpansionGraph():
@@ -195,24 +195,18 @@ class ExpansionGraph():
         for k,v in self.spaceGraphs.items():
             if len(v.items()) >= self.theta:
                 frequents[k] = v
-                # break
         
         eqGraphClasses = {}
         canTree = canonicalForm(self.matrixAdj)    
         if len(frequents.items()) > 0:
-            # print("result",frequents)
             for k,v in frequents.items():
-                idFirstGraph = list(v.keys())[0]
-                subGraph = np.copy(v[idFirstGraph][0])
-                # subGraph = np.copy(firstGraph[0])
-                for i in range(subGraph.shape[0]):
-                    subGraph[i,i] = self.graphs[idFirstGraph][subGraph[i,i],subGraph[i,i]]
+                subGraph = string2matrix(k)
                 # print("subgraph",subGraph)
                 # print("can subgraph",canonicalForm(subGraph))
                 # print("tree",self.matrixAdj)
                 # print("canTree",canTree)
                 if canonicalForm(subGraph) == canTree:
-                    eqGraphClasses[np.array2string(subGraph)] = v
+                    eqGraphClasses[k] = v
             # exit(0)
         print("eqGraphClass",eqGraphClasses)
         # print("current form tree",canonicalForm(self.matrixAdj))

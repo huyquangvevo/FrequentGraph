@@ -12,7 +12,9 @@ class GraphCollection():
         self.theta = theta_ * len(graphs_)
         self.freqEdges = self.getFrequentEdges(self.graphs,self.theta)
         self.initTempTree()
-        # print("init temp Tree",self.tempTrees)
+        print("theta",self.theta)
+        print("freqEdges",self.freqEdges)
+        print("init temp Tree",self.tempTrees)
 
     def getFrequentEdges(self,graphs : List[np.ndarray],theta):
         frequentEdges = {}
@@ -167,8 +169,47 @@ class GraphCollection():
                     extensions.append(self.extend(X,pad))
         return extensions
 
-    # def hasNoExternalAssEdge(self,tree: np.ndarray):
-        # for 
+    def hasNoExternalAssEdge(self,tree : np.ndarray,embeddings : dict):
+        numEmb = 0
+        for k in embeddings.keys():
+            numEmb += len(embeddings[k])
+        print("numEmbedding",numEmb)
+        # print("embeddings",embeddings)
+        for i in range(tree.shape[0]):
+            externalEdges = {}
+            # print("iExternal",i)
+            for idGraph in embeddings.keys():
+                for subGraph in embeddings[idGraph]:
+                    curNode = subGraph[i,i]
+                    indices = np.where(self.graphs[idGraph][curNode] > 0)[0] # neigbor of curNode
+                    indexNodes = subGraph.diagonal() #[subGraph[j,j] for j in np.where(subGraph[i] > 0)[0]]    # in embedding
+                    nodes = list(set(indices) - set(indexNodes)) # node not in subgraph of node curNode
+                    # print("External-idGraph-subGraph",idGraph,subGraph)
+                    # print("incides External",indices)
+                    # print("indexNodes Ex",indexNodes)
+                    # print("nodes External",nodes)
+                    # print("curNode",curNode)
+                    edges = set()
+                    for node in nodes:
+                        if node != curNode:
+                            # print("edgeToadd",(self.graphs[idGraph][curNode,curNode],self.graphs[idGraph][node,node],self.graphs[idGraph][curNode,node]))
+                            edges.add((self.graphs[idGraph][curNode,curNode],self.graphs[idGraph][node,node],self.graphs[idGraph][curNode,node]))
+                    # print("edgesSet",edges)
+                    # exit(0)
+                    for edge in edges:
+                        try:
+                            externalEdges[edge]  += 1
+                        except:
+                            externalEdges[edge]  = 1
+            for k,v in externalEdges.items():
+                # print("externalEdges key",k)
+                # print("externalEdges value",v)
+                if v == numEmb:
+                    # exit(0)
+                    return False
+        # exit(0)
+        return True
+
 
 
 
@@ -334,7 +375,7 @@ class GraphCollection():
 
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
-            # print("afterFrequentTRee",S)
+            print("afterFrequentTRee",S)
             U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
@@ -342,25 +383,27 @@ class GraphCollection():
             # print("V empty",V)
             # print("X ok ex",X)
             # print("encode X",encodeX)
-            print("ok expansion",X)
-
-            eg = ExpansionGraph(
-                X.copy(),
-                C[encodeX],
-                self.graphs,self.freqEdges,
-                self.theta
-            )
-            
             for k,v in U.items():
-                Q[k] = v
-            expansionX = eg.expand()
-            # print("expansion X",expansionX)
-            for k,v in expansionX.items():
                 Q[k] = v
 
             R[encodeX] = C[encodeX]
             for k,v in V.items():
                 R[k] = v
+            if self.hasNoExternalAssEdge(X,C[encodeX]):
+                print("ok expansion",X)
+                eg = ExpansionGraph(
+                    X.copy(),
+                    C[encodeX],
+                    self.graphs,self.freqEdges,
+                    self.theta
+                )
+                expansionX = eg.expand()
+                print("expansion X",expansionX)
+                for k,v in expansionX.items():
+                    Q[k] = v
+                # exit(0)
+
+            
             # del eg
         # print("Q",len(Q.items))
         # print("R",R)
@@ -385,16 +428,21 @@ class GraphCollection():
         
         # self.exploreGenericTree(self.freqEdges2matrix(),[],self.tempTrees)
 
-        results = self.exploreGenericTree(self.tempTrees,{})
+        results,S = self.exploreGenericTree(self.tempTrees,{})
         # print("final results",results[0])
-        try:
-            print("final result",results)
-            # numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results[0].items()])
-            # indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
-            return results[0]
-            # return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
-        except:
+        # try:
+        print("S-final",S)
+        print("final result",results)
+        if len(results.items()) == 0:
             return []
+        numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results.items()])
+        # print("numNodeGraphs",numNodeGraphs)
+        indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+        # return results[0]
+        # print("indicesFreq",indicesFreq)
+        return [string2matrix(list(results.keys())[i]) for i in indicesFreq]
+        # except:
+            # return []
         # freqGraphs = [for k in freqGraphs]
         # for k,v in results:
             

@@ -9,9 +9,10 @@ datasets = "mico"
 graphs = readGraphs('{}.outx'.format(datasets))
 
 def extractResultGraph(results):
-    numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results.items()])
-    indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
-    return [string2matrix(list(results[0].keys())[i]) for i in indicesFreq]
+    for k,v in results.items():
+        numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results.items()])
+        indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]
+        return [string2matrix(list(results.keys())[i]) for i in indicesFreq]
 
 
 
@@ -26,12 +27,13 @@ if __name__ == "__main__":
     
     freqGraphs = graphDB.frequentGraph()
     print("freqGraphs",freqGraphs)
-    with open('result-{}.json'.format(datasets), 'w') as fp:
-        json.dump(freqGraphs, fp)
+    # with open('result-{}.json'.format(datasets), 'w') as fp:
+        # json.dump(freqGraphs, fp)
     # df = pd.DataFrame({"MaxSubgraph" : [np.array2string(g) for g in freqGraphs]})
     # df.to_csv("result-{}.csv".format(datasets),index=False)
     # exit()
-    freqGraph = extractResultGraph(freqGraphs)
+    # freqGraphs = extractResultGraph(freqGraphs)
+    # print("freqGraph",freqGraph)
     for freqGraph in freqGraphs:
         plotGraph(freqGraph,False)
    
