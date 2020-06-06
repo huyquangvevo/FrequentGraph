@@ -5,7 +5,7 @@ from algorithm import string2matrix
 import numpy as np
 import json 
 
-datasets = "mico-demo"
+datasets = "mico"
 graphs = readGraphs('{}.outx'.format(datasets))
 
 def extractResultGraph(results):
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # frequentGraph(graphs,frequents)
     
     graphDB = GraphCollection(graphs,1.0)
-    print("Frequent edges",graphDB.freqEdges)
+    print("Frequent edges",len(graphDB.freqEdges.items()))
     # plotGraph(graphDB.graphs[0])
     
     freqGraphs = graphDB.frequentGraph()
