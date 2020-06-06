@@ -46,7 +46,7 @@ def readGraphs(path):
         for e,l in graph[1].items():
             g[e[0],e[1]] = l
             g[e[1],e[0]] = l
-        graphs.append(g[:20,:20])
+        graphs.append(g[:24,:24])
     return graphs
 
 def plotGraph(graph : np.ndarray,isShowedID=True):

@@ -18,7 +18,7 @@ class GraphCollection():
             print(edge)
         print("end freq edges")
         # exit()
-        # print("init temp Tree",self.tempTrees)
+        print("init temp Tree",self.tempTrees)
 
     def getFrequentEdges(self,graphs : List[np.ndarray],theta):
         frequentEdges = {}
@@ -64,75 +64,10 @@ class GraphCollection():
                 topo = []
                 # print("match i ",matches[i])
                 for e in matches[i]:
-                    m = np.array([[e[0],edge[2]],[edge[2],e[1]]])
+                    m = np.array([e[0],e[1]])
                     # print("i",i,"m",m)
                     topo.append(m)
                 self.tempTrees[encodeEdge][i] = topo  
-
-    def encodeGraph(self,graph):
-        visited = [False]*len(graph)
-        queue = []
-        queue.append(0)
-        visited[0] = True
-        code = str(graph[0,0]) + '$'
-        while queue:
-            s = queue.pop(0)
-            levelStr = ''
-            for i in np.where(graph[s]>0)[0][s+1:]:
-                queue.append(i)
-                levelStr += str(graph[s,i]) + "_" + str(graph[i,i]) + "_"
-                visited[i] = True 
-            if levelStr != '':
-                code += levelStr[:-1] +  '$'
-        code += '#'
-
-        return code
-
-
-    def canonicalForm(self,graph: np.ndarray):
-        labelNodes = graph.diagonal()
-        start = np.zeros((1,1),dtype=int)
-        maxNodes = np.where(labelNodes == np.max(labelNodes))[0]
-        start[0,0] = np.max(labelNodes)
-        canonical = {
-            "code" : ''
-        }
-        for idStart in maxNodes:
-            S = {
-                "tree" : start,
-                "index" : np.array([idStart]),
-                "code" : self.encodeGraph(start)
-            }
-
-            while (len(S["index"]) < len(labelNodes)):
-                # trees = []
-                newCandidates = {}
-                for i in range(graph.shape[0]):
-                    if i in S["index"]:
-                        continue
-                    Q = []
-                    t = S["tree"]
-                    for id,j in enumerate(S["index"]):
-                        if graph[i,j] == 0:
-                            continue
-                        rowExpand = np.zeros((1,t.shape[0]),dtype=int)
-                        rowExpand[0,id] = graph[i,j]
-                        tree = np.r_[t,rowExpand]
-                        colExpand = np.zeros((tree.shape[0],1),dtype=int)
-                        colExpand[id,0] = graph[i,j]
-                        colExpand[tree.shape[0]-1,0] = graph[i,i]
-                        tree = np.c_[tree,colExpand]
-                        indexTree = np.concatenate([S["index"],np.array([i])])
-                        codeTree = self.encodeGraph(tree)
-                        newCandidates[codeTree] = {
-                            "tree" : tree,
-                            "index" : indexTree,
-                            "code" : codeTree
-                        }
-
-                S = newCandidates[max(newCandidates.keys())]
-            canonical = S if canonical["code"] < S["code"] else canonical 
-        return canonical["tree"]
 
     def joinCase3bFFSM(self,graphX: np.ndarray,graphY: np.ndarray):
         n = graphX.shape[0]
@@ -184,8 +119,9 @@ class GraphCollection():
                     extensions.append(self.extend(X,pad))
         return extensions
 
+
     def hasNoExternalAssEdge(self,tree : np.ndarray,embeddings : dict):
-        # return True
+        return True
         numEmb = 0
         for k in embeddings.keys():
             numEmb += len(embeddings[k])
@@ -196,9 +132,9 @@ class GraphCollection():
             # print("iExternal",i)
             for idGraph in embeddings.keys():
                 for subGraph in embeddings[idGraph]:
-                    curNode = subGraph[i,i]
+                    curNode = subGraph[i]
                     indices = np.where(self.graphs[idGraph][curNode] > 0)[0] # neighbor of curNode
-                    indexNodes = subGraph.diagonal() #[subGraph[j,j] for j in np.where(subGraph[i] > 0)[0]]    # in embedding
+                    indexNodes = subGraph#.diagonal() #[subGraph[j,j] for j in np.where(subGraph[i] > 0)[0]]    # in embedding
                     nodes = list(set(indices) - set(indexNodes)) # node not in subgraph of node curNode
                     # print("External-idGraph-subGraph",idGraph,subGraph)
                     # print("incides External",indices)
@@ -229,83 +165,6 @@ class GraphCollection():
         # print("treeAss",tree)
         # print("AssEmbeding",embeddings)
         return True
-
-
-
-
-
-    def exploreFFSM(self,C):
-        # print("C\n",C)
-        if len(C) == 0:
-            return
-        # newTempTrees = {}
-        Q = []
-        for X in C:
-            S = []
-            newTempTrees = {}
-            for Y in C:
-                candidates = []
-                print("X\n",X)
-                print("Y\n",Y)
-                if np.array_equal(X[:-1,:-1],Y[:-1,:-1]) and not np.array_equal(X[-1],Y[-1]):
-                    candidates.append(self.joinCase3bFFSM(X,Y))
-                    # print("join",candidates[0],"x",X,"y",Y)
-                extensions = self.extendFFSM(X,Y)
-                if len(extensions) > 0:
-                    print("extension X\n",X,"\nY",Y )
-                    candidates.extend(extensions)
-                # print("X",X)
-                # print("Y",Y)
-                # print("candidates",candidates)
-                for joinedTree in candidates:
-                    # joinedTree = self.joinCase3bFFSM(X,Y)
-                    # print("joinedTree",joinedTree)
-                    indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
-                    # print("index add node",indexAddNode)
-                    embedJoinedTree = np.array2string(joinedTree)
-                    for i in self.tempTrees[np.array2string(X)].keys():
-                        topo= []
-                        for subGraph in self.tempTrees[np.array2string(X)][i]:
-                            # print("subgraph",subGraph)
-                            linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
-                            # print("indexNode",indexAddNode,"linkNoded",linkedNode)
-                            # print("joinedTree",joinedTree)
-                            for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
-                                if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
-                                    pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
-                                    pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
-                                    pad[0,-1] = j
-                                    topo.append(self.extend(subGraph,pad))
-                        # print("i",i,"topo",topo)
-                        if len(topo) > 0:
-                            # print("embed",embedJoinedTree)
-                            if embedJoinedTree not in newTempTrees:
-                                newTempTrees[embedJoinedTree] = {}
-                                S.append(joinedTree)
-                            newTempTrees[embedJoinedTree][i] = topo
- 
-            
-            temp = {}
-            nextCans = []
-            i = 0
-            print("new tempTrees",newTempTrees)
-            # print("theta",self.theta," len",len(self.graphs))
-            print("threshold",self.theta)
-            for k,v in newTempTrees.items():
-                # print("len items",len(v.items()))
-                if len(v.items()) > self.theta:
-                    temp[k] = v
-                    nextCans.append(S[i])
-                    # print("S i",S[i])
-                i += 1
-            if len(temp.items()) == 0:
-                return
-            self.tempTrees = temp
-            # print("new tempTrees",self.tempTrees)
-            # print("next candidate",nextCans)
-            # Q = Q.extend(self.exploreFFSM(nextCans))
-            self.exploreFFSM(nextCans)
-            return 0
 
     def freqEdges2matrix(self):
         matrices = []
@@ -339,7 +198,8 @@ class GraphCollection():
                 # if len(extensions) > 0:
                     # candidates.extend(extensions)
             # print("candidates",len(candidates))
-            extensions = self.extendFFSM(X,Y)
+            
+            extensions = extendOneNode(X,Y)
             if len(extensions) > 0:
                 candidates.extend(extensions)
             
@@ -349,23 +209,40 @@ class GraphCollection():
                 # print("joinedTree",joinedTree)
                 indexAddNode = np.where(joinedTree[-1] > 0)[0][0]
                 # print("indexAddNode",np.where(joinedTree[-1] > 0)[0])
-                embedJoinedTree = np.array2string(joinedTree)
+                # embedJoinedTree = np.array2string(joinedTree)
+                cam = canonicalForm(joinedTree)
+                embedCamTree = np.array2string(cam['tree'])
                 for i in C[np.array2string(X)].keys():
                     topo= []
-                    for subGraph in C[np.array2string(X)][i]:
-                        linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
-                        for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
-                            if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
-                                pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
-                                pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
-                                pad[0,-1] = j
-                                topo.append(self.extend(subGraph,pad))
+                    for subNodes in C[np.array2string(X)][i]:
+                        linkedNode = subNodes[indexAddNode]
+                        for j in np.where(self.graphs[i][linkedNode] > 0)[0]:
+                            if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subNodes:
+                                # print("prevNodes",subNodes)
+                                newSubNodes = np.append(subNodes,np.array([j]))
+                                # print("newSubNodes",newSubNodes)
+                                # print("camTree",cam["index"])
+                                reindicedNodes = np.array([newSubNodes[idNode] for idNode in cam['index']])
+                                # print("newReindexNode",reindicedNodes)
+                                topo.append(reindicedNodes)
+                
+                    # for subGraph in C[np.array2string(X)][i]:
+                    #     linkedNode = subGraph[indexAddNode,indexAddNode] # node is extended
+                    #     for j in np.where(self.graphs[i][linkedNode] > 0)[0]: # get neighbor of linked node
+                    #         if self.graphs[i][linkedNode,j] == joinedTree[-1,indexAddNode] and j not in subGraph.diagonal():
+                    #             pad = np.zeros((1,subGraph.shape[0]+1),dtype=int)
+                    #             pad[0,indexAddNode] = joinedTree[-1,indexAddNode]
+                    #             pad[0,-1] = j
+                    #             topo.append(self.extend(subGraph,pad))
+                    # cam = self.canonicalForm()
                     if len(topo) > 0:
-                        if embedJoinedTree not in newTempTrees:
-                            newTempTrees[embedJoinedTree] = {}
-                            S.append(joinedTree)
-                        newTempTrees[embedJoinedTree][i] = topo
- 
+                        # print("topo",topo)
+                        if embedCamTree not in newTempTrees:
+                            newTempTrees[embedCamTree] = {}
+                            # S.append(joinedTree)
+                        newTempTrees[embedCamTree][i] = topo
+                # print("CamJoined",cam)
+                # print("embedCamTRee",embedCamTree)
             
         temp = {}
         
@@ -373,33 +250,21 @@ class GraphCollection():
             if len(v.items()) >= self.theta:
                 # temp[np.array2string(canonicalForm(string2matrix(k),code=False))] = v
                 temp[k] = v
+        # print(temp)
         return temp
 
     
 
     def exploreGenericTree(self,C : dict,R : dict):
-        # print("C in\n",C)
+        print("C in\n",C)
         # print("Temptrees len", len(tempTrees.items()))
         print("timestamp",datetime.datetime.now())
         Q = {}
         # print("reprGroup",C)
         for idCan,can in enumerate(C.items()):
-            # print("canCItems",C.keys())
-            # reprGroup,group = can
             X = string2matrix(can[0])
-            # print("X",X)
-            # Y = [string2matrix(k) for k,v in C.items()]
-            # print("Y",Y)
             print('begin frequent trees')
-            # print("X ",X)
-            # print("C copy",C.copy())
             nextCan = {k:C[k] for k in list(C.keys())[idCan+1:]}
-            print("setCan",len(C.keys()))
-            # print("canCur",can[0])
-            print("nextCan",len(nextCan.keys()))
-            # if idCan == 3:
-                # exit(0)
-            # continue
 
             S = self.frequentTrees(X,nextCan.keys(),C.copy())
             encodeX = np.array2string(X)
@@ -407,19 +272,24 @@ class GraphCollection():
             # S - R
             
 
-            canonicalS = {canonicalForm(string2matrix(k)):k for k in S.keys()}
+            # canonicalS = {canonicalForm(string2matrix(k)):k for k in S.keys()}
             # print("SSS before",S.keys())
             # print("RRBefore",R.keys())
+            # for kR in R.keys():
+            #     canonicalKR = canonicalForm(string2matrix(kR))
+            #     if canonicalKR in canonicalS.keys():
+            #         if canonicalS[canonicalKR] in S:
+            #             del S[canonicalS[canonicalKR]]
+
+            # remove duplicate
             for kR in R.keys():
-                canonicalKR = canonicalForm(string2matrix(kR))
-                if canonicalKR in canonicalS.keys():
-                    if canonicalS[canonicalKR] in S:
-                        del S[canonicalS[canonicalKR]]
+                if kR in S:
+                    del S[kR]
                     
 
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
-            print("afterFrequentTRee size S: ",len(S.keys()))
+            # print("afterFrequentTRee size S: ",S.keys())
             U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
@@ -435,14 +305,17 @@ class GraphCollection():
                 R[k] = v
             if self.hasNoExternalAssEdge(X,C[encodeX]):
                 print("ok expansion",X)
+                # print("topoX",C[encodeX])
                 eg = ExpansionGraph(
                     X.copy(),
                     C[encodeX],
-                    self.graphs,self.freqEdges,
+                    self.graphs,
+                    self.freqEdges,
                     self.theta
                 )
                 expansionX = eg.expand()
-                print("expansion X",expansionX)
+                # print("beforeExpansionX",X)
+                # print("expansion X",expansionX)
                 for k,v in expansionX.items():
                     Q[k] = v
                 # exit(0)
@@ -471,12 +344,13 @@ class GraphCollection():
         # self.exploreFFSM(self.freqEdges2matrix())
         
         # self.exploreGenericTree(self.freqEdges2matrix(),[],self.tempTrees)
-
+        # print("canonical",self.canonicalForm(graphDemo))
+        # exit(0)
         results,S = self.exploreGenericTree(self.tempTrees,{})
         # print("final results",results[0])
         # try:
         print("S-final",S)
-        print("final result",results)
+        print("final result",results.keys())
         if len(results.items()) == 0:
             return []
         numNodeGraphs = np.array([string2matrix(k).shape[0] for k,v in results.items()])

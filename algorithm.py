@@ -30,7 +30,7 @@ def encodeGraph(graph):
 
     return code
 
-def canonicalForm(graph: np.ndarray,code=True):
+def canonicalForm(graph: np.ndarray,embeddings=None):
     labelNodes = graph.diagonal()
     start = np.zeros((1,1),dtype=int)
     maxNodes = np.where(labelNodes == np.max(labelNodes))[0]
@@ -72,8 +72,16 @@ def canonicalForm(graph: np.ndarray,code=True):
                     }
 
             S = newCandidates[max(newCandidates.keys())]
-        canonical = S if canonical["code"] < S["code"] else canonical 
-    return canonical["code"] if code else canonical["tree"]
+        canonical = S if canonical["code"] < S["code"] else canonical
+        if embeddings is not None:
+            for k in embeddings.keys():
+                topo = []
+                for subNodes in embeddings[k]:
+                    reindexedNodes = np.array([subNodes[idNode] for idNode in canonical['index']])
+                    topo.append(reindexedNodes)
+                embeddings[k] = topo
+    return canonical
+    #return canonical["code"] if code else canonical["tree"]
 
 def extend(X: np.ndarray,pad: np.ndarray):
     n = X.shape[0]

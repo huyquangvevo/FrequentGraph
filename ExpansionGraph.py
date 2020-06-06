@@ -12,15 +12,17 @@ class ExpansionGraph():
         self.spaceGraphs = {np.array2string(matrixAdj_):topoGraphs_}
         self.canEdges = [] #self.setCandidateEdges(freqEdges_)
         self.associativeEdges = [] #self.setAssociativeEdge()
+        # print("matrixAdj",matrixAdj_)
+        # print("topoGraphs_",topoGraphs_)
         self.setCandidateEdges(freqEdges_)
         self.setAssociativeEdge()
-        print("associate edges",self.associativeEdges)
+        # print("associate edges",self.associativeEdges)
 
 
     def setCandidateEdges(self,freqEdges):
         mapEdges = {(e[0],e[1]):e[2] for e in freqEdges.keys()}
         # mapEdges = {(15,30) : 10}
-        # print("freqEdges",freqEdges)
+        # print("mapEdges",mapEdges)
         indices = np.where(self.matrixAdj == 0)
         # print("matrix",self.matrixAdj)
         # print("indices",indices)
@@ -31,7 +33,7 @@ class ExpansionGraph():
             k = tuple(sorted((self.matrixAdj[iR,iR],self.matrixAdj[iC,iC])))
             if k in mapEdges and iR <= iC:
                 canEdges.append((iR,iC,mapEdges[k]))   
-        # print(canEdges)
+        # print("canEdges",canEdges)
         self.canEdges = canEdges
         # return canEdges
 
@@ -40,7 +42,7 @@ class ExpansionGraph():
             isAssociative = True
             for graph in self.subGraphs.keys():
                 for sub in self.subGraphs[graph]:
-                    if self.graphs[graph][sub[edge[0],edge[0]],sub[edge[1],edge[1]]] != edge[2]:
+                    if self.graphs[graph][sub[edge[0]],sub[edge[1]]] != edge[2]:
                         isAssociative = False
                         break
                 if not isAssociative:
@@ -75,18 +77,22 @@ class ExpansionGraph():
         # print("len canEdges",len(canEdges))
         for i,edge in enumerate(canEdges):
             canGraph = self.joinEdge(graph.copy(),edge)
+            # print("canGraph",canGraph)
             embedCanGraph = np.array2string(canGraph)
             for j in self.spaceGraphs[encodeGraph].keys():
                 topo = []
                 for subGraph in self.spaceGraphs[encodeGraph][j]:
-                    sNode = subGraph[edge[0],edge[0]] # id source node
-                    dNode = subGraph[edge[1],edge[1]] # id destination node
+                    sNode = subGraph[edge[0]] # id source node
+                    dNode = subGraph[edge[1]] # id destination node
+                    # print("sNode",sNode,"dNode",dNode)
                     if self.graphs[j][sNode,dNode] == edge[2]:
-                        topo.append(self.joinEdge(subGraph,edge))
+                        # print("okSub")
+                        topo.append(subGraph)
                 if len(topo) > 0:
                     if embedCanGraph not in self.spaceGraphs:
                         self.spaceGraphs[embedCanGraph] = {}
                     self.spaceGraphs[embedCanGraph][j] = topo
+                    print("canIsTrue",canGraph)
             # self.searchGraph(canGraph,canEdges[i+1:]) if (embedCanGraph in self.spaceGraphs) else self.searchGraph(graph,canEdges[i+1:])
             if embedCanGraph in self.spaceGraphs:
                 self.searchGraph(canGraph,canEdges[i+1:]) 
@@ -100,7 +106,9 @@ class ExpansionGraph():
         fullGraph = graph.copy()
         for i,edge in enumerate(canEdges):
             fullGraph = self.joinEdge(fullGraph,edge)
-        # print("full Graph",fullGraph)
+        # print("full Graph",len(fullGraph.diagonal()))
+        # print(fullGraph)
+
         codeFullGraph = np.array2string(fullGraph)
         for idGraph in self.spaceGraphs[encodeGraph].keys():
             topo = []
@@ -111,9 +119,9 @@ class ExpansionGraph():
                 for i,edge in enumerate(canEdges):
                     # print("edge",edge)
                     # print("subGraphEdge",self.graphs[idGraph][subGraph[edge[0],edge[0]],subGraph[edge[1],edge[1]]])
-                    if  self.graphs[idGraph][subGraph[edge[0],edge[0]],subGraph[edge[1],edge[1]]] == edge[2]:
-                        subGraph = self.joinEdge(subGraph,edge)
-                    else:
+                    if  self.graphs[idGraph][subGraph[edge[0]],subGraph[edge[1]]] != edge[2]:
+                        # subGraph = self.joinEdge(subGraph,edge)
+                    # else:
                         flag = False
                         break
                 # print("subGraph",subGraph,flag)
@@ -136,7 +144,7 @@ class ExpansionGraph():
         for asEdge in self.associativeEdges:
             self.matrixAdj = self.joinEdge(self.matrixAdj,asEdge)
         
-        if canonicalForm(initialTree) != canonicalForm(self.matrixAdj):
+        if canonicalForm(initialTree)['code'] != canonicalForm(self.matrixAdj)['code']:
             return True
         
         # print("spaceGraphsInMerge",self.spaceGraphs.keys())
@@ -185,19 +193,21 @@ class ExpansionGraph():
         
         # print("before eliminate",self.canEdges)
         self.eliminateAssEdges()
-        print("eliminated",self.canEdges)
+        # print("eliminated",self.canEdges)
         # exit(0)
 
         self.searchGraph(self.matrixAdj,self.canEdges)
 
-        print("space graphs",self.spaceGraphs)
+        print("end searchGraphs")
         frequents = {}
         for k,v in self.spaceGraphs.items():
+            # print("kFreq",k)
             if len(v.items()) >= self.theta:
+                # print("frequentExpansion",k)
                 frequents[k] = v
         
         eqGraphClasses = {}
-        canTree = canonicalForm(self.matrixAdj)    
+        canTree = canonicalForm(self.matrixAdj)['code']    
         if len(frequents.items()) > 0:
             for k,v in frequents.items():
                 subGraph = string2matrix(k)
@@ -205,7 +215,13 @@ class ExpansionGraph():
                 # print("can subgraph",canonicalForm(subGraph))
                 # print("tree",self.matrixAdj)
                 # print("canTree",canTree)
-                if canonicalForm(subGraph) == canTree:
+                
+                # print("beforeCanical",k,v)
+                cam = canonicalForm(subGraph)
+                # print("afterCanical",cam['tree'],v)
+                # print('camCode',cam['code'])
+                if cam['code'] == canTree:
+                    # print("eqItem",k)
                     eqGraphClasses[k] = v
             # exit(0)
         print("eqGraphClass",eqGraphClasses)
