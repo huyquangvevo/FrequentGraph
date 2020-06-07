@@ -5,7 +5,7 @@ from algorithm import string2matrix
 import numpy as np
 import json 
 
-datasets = "mico"
+datasets = "mico-demo"
 graphs = readGraphs('{}.outx'.format(datasets))
 
 def extractResultGraph(results):

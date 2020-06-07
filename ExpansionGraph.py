@@ -16,7 +16,7 @@ class ExpansionGraph():
         # print("topoGraphs_",topoGraphs_)
         self.setCandidateEdges(freqEdges_)
         self.setAssociativeEdge()
-        # print("associate edges",self.associativeEdges)
+        print("associate edges",self.associativeEdges)
 
 
     def setCandidateEdges(self,freqEdges):
@@ -63,8 +63,8 @@ class ExpansionGraph():
         #bottom-up pruning
         codeFullGraph = self.mergeToGraph(graph,canEdges)
         if codeFullGraph in self.spaceGraphs:
-            if len(self.spaceGraphs[codeFullGraph].items()) > self.theta:
-                print("bottom-up aval",self.spaceGraphs[codeFullGraph])
+            if len(self.spaceGraphs[codeFullGraph].items()) >= self.theta:
+                print("bottom-up aval",codeFullGraph)
                 # exit(0)
                 return {
                     codeFullGraph : self.spaceGraphs[codeFullGraph]

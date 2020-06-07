@@ -16,8 +16,8 @@ def read_graph_corpus(path, label_center_path=None):
             if 't' in line:
                 if len(nodes) > 0:
                     graphs.append((nodes, edges))
-                    if len(graphs) > 9:
-                        break
+                    # if len(graphs) > 239:
+                        # break
                 nodes = {}
                 edges = {}
             if 'v' in line:
@@ -46,7 +46,7 @@ def readGraphs(path):
         for e,l in graph[1].items():
             g[e[0],e[1]] = l
             g[e[1],e[0]] = l
-        graphs.append(g[:24,:24])
+        graphs.append(g)#[:25,:25])
     return graphs
 
 def plotGraph(graph : np.ndarray,isShowedID=True):
@@ -70,5 +70,6 @@ def plotGraph(graph : np.ndarray,isShowedID=True):
     
     nx.draw_networkx_edge_labels(G,pos,edge_labels=edgeLabels,font_color='red')
     plt.axis('off')
+    plt.savefig('./figures/{}.png'.format(np.array2string(graph[0])),format='PNG')
     plt.show()
 
