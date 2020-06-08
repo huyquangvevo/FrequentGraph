@@ -16,7 +16,7 @@ class ExpansionGraph():
         # print("topoGraphs_",topoGraphs_)
         self.setCandidateEdges(freqEdges_)
         self.setAssociativeEdge()
-        print("associate edges",self.associativeEdges)
+        # print("associate edges",self.associativeEdges)
 
 
     def setCandidateEdges(self,freqEdges):

@@ -126,7 +126,7 @@ class GraphCollection():
         numEmb = 0
         for k in embeddings.keys():
             numEmb += len(embeddings[k])
-        print("numEmbedding",numEmb)
+        # print("numEmbedding",numEmb)
         # print("embeddings",embeddings)
         for i in range(tree.shape[0]):
             externalEdges = {}
@@ -264,7 +264,7 @@ class GraphCollection():
     def frequentTrees2(self,tree: np.ndarray,embeddings: dict):
         n = tree.shape[0]
         canFreqTree = {}
-        print("timestamp frequent trees 2",datetime.datetime.now())
+        print("frequent trees 2: ",datetime.datetime.now())
         for i in range(n):
             curLabel = tree[i,i]
             canEdges = []
@@ -304,21 +304,21 @@ class GraphCollection():
 
         return freqTree
 
-
+    countGen = 0
     def exploreGenericTree(self,C : dict,R : dict):
-        print("C in\n",C.keys())
+        # print("C in\n",C.keys())
         # print("Temptrees len", len(tempTrees.items()))
         print("timestamp",datetime.datetime.now())
         Q = {}
         # print("reprGroup",C)
         for idCan,can in enumerate(C.items()):
             X = string2matrix(can[0])
-            print('begin frequent trees')
+            # print('begin frequent trees')
             nextCan = {k:C[k] for k in list(C.keys())[idCan+1:]}
 
             encodeX = np.array2string(X)
             S = self.frequentTrees2(X,C[encodeX])
-            print("After S-freq",S.keys())
+            # print("After S-freq",S.keys())
             
             # S - R
             canonicalS = {canonicalForm(string2matrix(k))['code']:k for k in S.keys()}
@@ -340,6 +340,8 @@ class GraphCollection():
             # print("tempTree after",self.tempTrees)
             # if len(S) != 0:
             # print("afterFrequentTRee size S: ",S.keys())
+            self.countGen += 1
+            print("Loop in generic tree: ",self.countGen)
             U,V = self.exploreGenericTree(S,R.copy())
             # print("S empty",S)
             # print("R empty",R)
@@ -354,7 +356,7 @@ class GraphCollection():
             for k,v in V.items():
                 R[k] = v
             if self.hasNoExternalAssEdge(X,C[encodeX]):
-                print("ok expansion",X)
+                print("MaxExpansion",X)
                 # print("topoX",C[encodeX])
                 eg = ExpansionGraph(
                     X.copy(),
@@ -403,6 +405,17 @@ class GraphCollection():
         print("final result",results.keys())
         if len(results.items()) == 0:
             return []
+
+        with open('result-mico.txt','w') as f:
+            for k in results.keys():
+                f.write('$' + k.replace('\n',''))
+                for g,v in results[k].items():
+                    f.write('\n#' + str(g) + '\n')
+                    for topo in v:
+                        f.write(' '.join(str(x) for x in topo))
+                f.write('\n')
+
+
         numNodeGraphs = np.array([len(np.where(string2matrix(k) > 0)[0]) for k,v in results.items()])
         # print("numNodeGraphs",numNodeGraphs)
         indicesFreq = np.where(numNodeGraphs == numNodeGraphs.max())[0]

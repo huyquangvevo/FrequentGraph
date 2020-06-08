@@ -16,7 +16,7 @@ def read_graph_corpus(path, label_center_path=None):
             if 't' in line:
                 if len(nodes) > 0:
                     graphs.append((nodes, edges))
-                    # if len(graphs) > 239:
+                    # if len(graphs) > 9:
                         # break
                 nodes = {}
                 edges = {}
@@ -46,7 +46,7 @@ def readGraphs(path):
         for e,l in graph[1].items():
             g[e[0],e[1]] = l
             g[e[1],e[0]] = l
-        graphs.append(g)#[:25,:25])
+        graphs.append(g)#[:15,:15])
     return graphs
 
 def plotGraph(graph : np.ndarray,isShowedID=True):
