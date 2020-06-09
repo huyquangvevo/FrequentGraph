@@ -3,12 +3,10 @@ import numpy as np
 def string2matrix(st):
     strMatrix = st[2:-2]
     rows = strMatrix.split("]\n [")
-    # print(row)
     matrix = []
     for row in rows:
         rowClean = row.replace("\n","")
         matrix.append(np.fromstring(rowClean,dtype=int,sep=' '))
-    # print(np.array(matrix))
     return np.array(matrix).copy()
 
 def encodeGraph(graph):
@@ -46,7 +44,6 @@ def canonicalForm(graph: np.ndarray,embeddings=None):
         }
 
         while (len(S["index"]) < len(labelNodes)):
-                # trees = []
             newCandidates = {}
             for i in range(graph.shape[0]):
                 if i in S["index"]:
@@ -81,23 +78,19 @@ def canonicalForm(graph: np.ndarray,embeddings=None):
                     topo.append(reindexedNodes)
                 embeddings[k] = topo
     return canonical
-    #return canonical["code"] if code else canonical["tree"]
 
 def extend(X: np.ndarray,pad: np.ndarray):
     n = X.shape[0]
     X = np.r_[X,pad[:,:-1]]
     pad = np.reshape(pad,(pad[0].shape[0],1))
     X = np.c_[X,pad]
-    # print("X extend",X)
     return X
 
 def extendOneNode(X: np.ndarray, Y: np.ndarray):
-    # print(X,Y)
     n = X.shape[0]
     xLabelNodes = X.diagonal()#np.unique(X.diagonal())
     extensions = []
     for i,lNode in enumerate(xLabelNodes):
-        # print("node",lNode,"i",i)
         indices = np.where(Y.diagonal() == lNode)[0]
         for iY in indices:
             for j in np.where(Y[iY] > 0)[0]:
@@ -109,12 +102,10 @@ def extendOneNode(X: np.ndarray, Y: np.ndarray):
     return extensions
 
 def extendByCore(X: np.ndarray, Y: np.ndarray):
-    # print(X,Y)
     n = X.shape[0]
     xLabelNodes = X.diagonal()#np.unique(X.diagonal())
     extensions = []
     for i,lNode in enumerate(xLabelNodes):
-        # print("node",lNode,"i",i)
         if i != n -1:
             continue
         indices = np.where(Y.diagonal() == lNode)[0]

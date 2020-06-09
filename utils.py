@@ -1,13 +1,11 @@
 import numpy as np
 import os
-# from graph import Graph
 import networkx as nx
 import matplotlib.pyplot as plt
 
 
 def read_graph_corpus(path, label_center_path=None):
     graphs = []
-    # label_center = open(label_center_path, 'r', encoding='utf-8')
     label_centers = []
     with open(path, 'r', encoding='utf-8') as file:
         nodes = {}
@@ -57,8 +55,6 @@ def plotGraph(graph : np.ndarray,isShowedID=True):
         for id in indices:
             edges.append([i,i+id+1])
             edgeLabels[(i,i+id+1)] = graph[i,i+id+1]
-    # print(edges,edgeLabels)
-    # exit(0)
     G = nx.Graph()
     G.add_edges_from(edges)
     pos = nx.spring_layout(G)
